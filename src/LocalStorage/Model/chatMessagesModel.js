@@ -8,6 +8,7 @@ export default chatMessagesModel =  {
         text: 'string',
         status: 'int',
         createdAt: 'date',
-        creation_on_server:'date',
+        chatMessageSenderType:'bool'
+        //CUSTOMER: true AGENCY:false
     }
 }

@@ -6,32 +6,44 @@ import {
     View
 } from 'react-native';
 import Magdy from './src/CheckConnection/checkInternetConnection';
-import { syncChannels, syncMessages } from './src/Sync';
+import { syncChannels, syncMessages, syncChannelMessages } from './src/LocalStorage/Sync';
 import ChatDetails from './src/List/src/Components/ChatDetails';
 import GenericList from './src/List/src/Components/GenericList';
 import Example from './src/List/src/Components/Tabs';
-import userService from './src/DAOs/userService';
+import userService from './src/LocalStorage/DAOs/userService';
+import ChannelView from './src/ChatController/ChannelView';
 import _ from 'lodash';
 
-function printResponse(response) {
-    console.log(response.json());
-}
 
+// const message1 = {
+//     channel_id: 1,
+//     message_id: 6,
+//     text: 'blabla'
+// }
+// userService.createMessage(message1);
+// const message2 = {
+//     channel_id: 1,
+//     message_id: 7,
+//     text: 'blabl'
+// }
+// userService.createMessage(message2);
 //syncChannels();
-//syncMessages();
+//syncChannelMessages();
+// userService.updateMessageStatus(18, 1, 2);
+// syncMessages( 1 , 1 , 0 );
 
 function redirectToChannel(channel) {
-    console.log('redirected to channel', channel.channel_id)
+    // console.log('redirected to channel', channel.channel_id)
 }
 
 function chatListAdapter() {
-    console.log('in chat list adapter')
+    // console.log('in chat list adapter')
     const localChannels = userService.findAllChannels();
-    console.log(localChannels);
+    // console.log(localChannels);
     const uiChannels = localChannels.map((channel) => {
         return {
             userName: channel.localName,
-            lastMessage: channel.latestUpdateTimeStamp.format("dd.mm.yyyy hh:MM:ss"),
+            lastMessage: channel.latestUpdateTimeStamp+"",
             numberOfUnreadMessages: channel.unreadMessages,
             onTouch: redirectToChannel(channel),
             image: channel.image == ''? 'https://i.imgur.com/K3KJ3w4h.jpg': channel.image
@@ -40,17 +52,33 @@ function chatListAdapter() {
     return uiChannels;
 }
 
+function messageListAdapter(channelSurrogateKey) {
+    //console.log('in message adapter',);
+}
+
 function _fillDatabaseWithDummyChannels() {
-    let i = 0;
+    let i = 1;
     while(i < 20) {
         userService.createChannel({
             channel_id: "x"+i,
             qr: '',
             status: true,
             localName: 'new user'+i,
-            unreadMessages: 0,
+            unreadMessages: i+2,
             image: '',
-            lastMessageState: 0
+            lastMessageState: 1
+        })
+        i++;
+    }
+    while(i < 30) {
+        userService.createChannel({
+            channel_id: "x"+i,
+            qr: 'x',
+            status: true,
+            localName: 'new user'+i,
+            unreadMessages: i+2,
+            image: '',
+            lastMessageState: 1
         })
         i++;
     }
@@ -81,7 +109,7 @@ const secondList = [
 
 
 function renderItems(item) {
-    console.log('in render item', item);
+    // console.log('in render item', item);
     return <ChatDetails key={item.userName} listItem={item} />;
 }
 
@@ -98,25 +126,9 @@ class testRealm extends Component {
     render() {
         // _fillDatabaseWithDummyChannels();
         const list = chatListAdapter();
-        console.log('ui channels', list);
+        // console.log('ui channels', list);
         return (
-            <View style={{flex: 1}}>
-                <Example
-                    tabs={[
-                        <GenericList
-                            data={list}
-                            renderItemFunction={renderItems}
-                            tabLabel="User"
-                            key="1"
-                        />,
-                        <GenericList
-                            data={secondList}
-                            renderItemFunction={renderItems}
-                            tabLabel="Agency"
-                            key="2"
-                        />]}
-                />
-            </View>
+            <ChannelView/>
         );
     }
 }
