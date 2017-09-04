@@ -8,16 +8,22 @@ function printChannels(channels) {
         console.log("channel", channel.channel_id, "unreadMessages", channel.unreadMessages);
     })
 }
-function syncChannels() {
+function syncChannels(shouldRefresh) {
     const obj = {agencyDeviceToken: '123'};
-    const URL = 'http://192.168.1.35:9998/onechat/openchannels';
-    POST(obj, URL, compareChannels);
+    const URL = 'http://192.168.1.26:9998/onechat/openchannels';
+    POST(obj, URL, (response, flag)=>compareChannels(response, flag, shouldRefresh));
 }
 
-function compareChannels(response) {
+function compareChannels(response, flag, shouldRefresh) {
+    let change = false;
     console.log("Hi");
+    console.log("flag: ", flag);
     console.log(response);
-    console.log("messages", response.data.openChannelsIDs);
+    if(!flag) {
+        shouldRefresh(true);
+        return;
+    }
+    console.log("channels", response.data.openChannelsIDs);
     const localChannels = userService.findAllActiveChannels();
     const remoteChannels = response.data.openChannelsIDs;
     let surrogate = localChannels.length;
@@ -38,8 +44,8 @@ function compareChannels(response) {
         for (let count = 0; count < localChannelsLength; count++) {
             let localChannel = localChannels[count];
             if (channel.agencySessionId == localChannel.channel_id) {
-                found = true;
-                timeoutFlags[count] = true;
+                    found = true;
+                    timeoutFlags[count] = true;
                 let unreadMessages = null;
                 console.log("from for");
 
@@ -51,6 +57,7 @@ function compareChannels(response) {
                     userService.updateChannel(localChannel.surrogateKey, unreadMessages, channel.status, channel.state);
                     console.log("Channels After", userService.findAllChannels());
                     printChannels(userService.findAllChannels());
+                    change = true;
                 }
                 break;
             }
@@ -65,18 +72,25 @@ function compareChannels(response) {
                 unreadMessages: channel.seqNumber,
                 image: '', //TODO
                 lastMessageState: channel.state
+
             }
             console.log('channel id ', channel.agencySessionId);
             userService.createChannel(new_channel);
             console.log('channel id created', channel.agencySessionId);
+            change = true;
         }
 
         for (let counter = 0; counter < localChannelsLength; counter++) {
             if (!timeoutFlags[counter]) {
                 userService.disableChannelStatus(localChannels[counter]);
+                change = true;
             }
         }
     });
+
+    if(change)
+        shouldRefresh(true);
+
 }
 
 function syncMessages(channelSurrogate, unreadMessages, state) {
@@ -84,7 +98,7 @@ function syncMessages(channelSurrogate, unreadMessages, state) {
         console.log("hi from if: detected no unread messages or change in state => don't sync");
         return;
     }
-    const URL = "http://192.168.1.35:9998/onechat/retrievemessages";
+    const URL = "http://192.168.1.26:9998/onechat/retrievemessages";
     const lastMessageIndex = userService.getlastUnread(channelSurrogate);
     const channel_id = userService.mapSurrogateId(channelSurrogate);
     const obj = {
@@ -144,7 +158,7 @@ dummy function to test a standalone version of retrieve messages api call
  */
 export function syncChannelMessages() {
     const obj = {"senderID": "NxoPHSD1QP2LHfPqYvc6AA", "fromMessageSequence": "1"};
-    const URL = "http://192.168.1.35:9998/onechat/retrievemessages";
+    const URL = "http://192.168.1.26:9998/onechat/retrievemessages";
     // if(localChannel.length == 0) {
     //     syncChannels();
     // }

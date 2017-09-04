@@ -12,13 +12,18 @@ let repository = new Realm({
 
 
 class userService {
-    static messageSurrogateKey = 0;
-    static channelSurrogateKey = 0;
+    static messageSurrogateKey = userService.getLength("Message");
+    static channelSurrogateKey = userService.getLength("Channel");
+
+    static getLength(table){
+        return (`${table}`).length ;
+    }
 
     /*
      create new channel in database
      channel object expecting
      */
+
     static createChannel(channel) {
         // console.log('surrogate', userService.channelSurrogateKey);
         // console.log('current length', userService.findAllChannels().length);
@@ -49,8 +54,6 @@ class userService {
         let messageObj;
         repository.write(() => {
             message.surrogateKey = ++userService.messageSurrogateKey;
-            message.createdAt = new Date(message.createdAt) || new Date();
-            message.status = message.status || 0;
             messageObj = repository.create('Messages', message);
 
         });
@@ -117,9 +120,10 @@ class userService {
      return a list of messages from a specific index
      for debugging purposes
      */
-    static findUnsyncMessages(channelSurrogate, lastMessageIndex) {
+    static findMessagesForChatPage(channelSurrogate, lastMessageIndex) {
+        const sortBy =  [['message_id' , true]];
         return repository.objects('Messages')
-            .filtered(`channelId = ${channelSurrogate} AND message_id >= ${lastMessageIndex} `).slice();
+            .filtered(`channel_id = ${channelSurrogate} AND message_id >= ${lastMessageIndex} `).sorted(sortBy).slice();
     }
 
     /*

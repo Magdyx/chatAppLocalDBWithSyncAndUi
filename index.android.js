@@ -12,6 +12,7 @@ import GenericList from './src/List/src/Components/GenericList';
 import Example from './src/List/src/Components/Tabs';
 import userService from './src/LocalStorage/DAOs/userService';
 import ChannelView from './src/ChatController/ChannelView';
+import ChatView from './src/ChatController/ChatView';
 import _ from 'lodash';
 
 
@@ -129,6 +130,7 @@ class testRealm extends Component {
         // console.log('ui channels', list);
         return (
             <ChannelView/>
+
         );
     }
 }

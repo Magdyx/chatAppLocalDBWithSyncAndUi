@@ -4,7 +4,7 @@ export default chatMessagesModel =  {
     properties: {
         surrogateKey: {type: 'int', indexed: true},
         channel_id: 'int',
-        message_id: {type: 'int', indexed: true},
+        message_id: 'int',
         text: 'string',
         status: 'int',
         createdAt: 'date',

@@ -2,13 +2,17 @@ import ChatDetails from '../List/src/Components/ChatDetails';
 import GenericList from '../List/src/Components/GenericList';
 import Example from '../List/src/Components/Tabs';
 import React, {Component} from 'react';
+import {ToastAndroid} from 'react-native';
 import userService from '../LocalStorage/DAOs/userService';
 import {StackNavigator, NavigationActions} from 'react-navigation';
+import {syncChannels} from '../LocalStorage/Sync';
 
-const usersList = [];
-const agencyList = [];
+let agencyList = [];
+let  usersList = [];
 
 function agencyOrUser() {
+    agencyList = [];
+    usersList = [];
     const localChannels = userService.findAllChannels();
     for (let i = 0; i < localChannels.length; i++) {
         let adaptedChannel = {
@@ -68,7 +72,7 @@ function renderItems(item) {
 
 function _fillDatabaseWithDummyChannels() {
     let i = 0;
-    while (i < 20) {
+    while (i < 1) {
         userService.createChannel({
             channel_id: "xjgj" + i,
             qr: '',
@@ -80,23 +84,53 @@ function _fillDatabaseWithDummyChannels() {
         })
         i++;
     }
-    while (i < 40) {
-        userService.createChannel({
-            channel_id: "x" + i,
-            qr: 'xx',
-            status: true,
-            localName: 'new user' + i,
-            unreadMessages: 0,
-            image: '',
-            lastMessageState: 0
-        })
-        i++;
-    }
+    // while (i < 4) {
+    //     userService.createChannel({
+    //         channel_id: "x" + i,
+    //         qr: 'xx',
+    //         status: true,
+    //         localName: 'new user' + i,
+    //         unreadMessages: 0,
+    //         image: '',
+    //         lastMessageState: 0
+    //     })
+    //     i++;
+    // }
 }
 
+
 class ChannelView extends Component {
+   constructor(){
+       super();
+       this.state = {
+            agencyList : [],
+            usersList : []
+       }
+       this.shouldRefresh = this.shouldRefresh.bind(this);
+   }
+
+    componentDidMount() {
+        setTimeout(()=>this.shouldRefresh(true),3000);
+
+    }
+
+    shouldRefresh(syncSuccess){
+        console.log("shouldRefresh");
+
+        if(syncSuccess) {
+            userService.channelSurrogateKey = userService.findAllChannels().length+1 ;
+            _fillDatabaseWithDummyChannels();
+            agencyOrUser();
+            this.forceUpdate();
+            ToastAndroid.show('force update', ToastAndroid.SHORT);
+        } else {
+            ToastAndroid.show('Network error: couldn\'t sync with server', ToastAndroid.SHORT);
+        }
+    }
+
     render() {
-        _fillDatabaseWithDummyChannels();
+       // _fillDatabaseWithDummyChannels();
+        console.log("len ",userService.channelSurrogateKey);
         agencyOrUser();
         return (
             <Example

@@ -1,22 +1,52 @@
-import react, {Component} from 'react';
+import React, {Component} from 'react';
 import userService from '../LocalStorage/DAOs/userService';
 import _ from 'lodash';
 import Chat from '../Chat/Chat';
 
+function _fillDatabaseWithDummyChannels() {
+    let i = 0;
+    while (i < 20) {
+        userService.createChannel({
+            channel_id: "xjgj" + i,
+            qr: '',
+            status: true,
+            localName: 'new user' + i,
+            unreadMessages: 0,
+            image: '',
+            lastMessageState: 0
+        })
+        i++;
+    }
+    while (i < 40) {
+        userService.createChannel({
+            channel_id: "x" + i,
+            qr: 'xx',
+            status: true,
+            localName: 'new user' + i,
+            unreadMessages: 0,
+            image: '',
+            lastMessageState: 0
+        })
+        i++;
+    }
+}
+
+
+
 function messageListAdapter(channelSurrogateKey) {
     console.log('in message adapter', channelSurrogateKey);
-    const localMessages = userService.findUnsyncMessages(channelSurrogateKey, 0);
+    const localMessages = userService.findMessagesForChatPage(channelSurrogateKey, 0);
     console.log('local messages are', localMessages);
     const userOrAgencyStatus = userService.identifyType(channelSurrogateKey);
+    const userId = userService.mapSurrogateId(channelSurrogateKey);
     const uiMessages = localMessages.map((message) => {
         return {
             _id: message.message_id,
             text: message.text,
             state: message.status,
-            image: 'https://facebook.github.io/react/img/logo_og.png',
             createdAt: message.createdAt,
             user: {
-                _id: userOrAgencyStatus==message.chatMessageSenderType?1:2,
+                _id: userOrAgencyStatus == message.chatMessageSenderType ? 1 : 2,
                 name: userService.getChannelLocalName(channelSurrogateKey),
             },
         }
@@ -24,105 +54,44 @@ function messageListAdapter(channelSurrogateKey) {
     return uiMessages;
 }
 
+function _fillDummyMessages(channelSurrogate){
+    let i = 2;
+    let flag = false;
+    while (i < 20) {
+        console.log('To create message', i);
+        userService.createMessage({
+            message_id: i+1,
+            channel_id: channelSurrogate,
+            text: "hello message " + i,
+            status: 3,
+            createdAt: new Date(),
+            chatMessageSenderType: flag
+        });
+        console.log("Message created", i);
+        i++;
+        flag = !flag;
+    }
+}
+
 class ChatView extends Component {
-
-    state = {
-        messages: [],
-        loadEarlier: true,
-        isLoadingEarlier: false,
-    };
-
-    componentDidMount() {
-        setTimeout(()=> {
-            this.setState({messages: messages});
-        }, 5000);
-    }
-
-    onLoadEarlier() {
-        this.setState({ isLoadingEarlier: true });
-        let rest = [
-            {
-                _id: 12,
-                text: 'Hello coder8',
-                state: 1,
-                createdAt: new Date(),
-                user: {
-                    _id: 4,
-                    name: 'React Native',
-                    avatar: 'https://facebook.github.io/react/img/logo_og.png',
-                },
-            },
-            {
-                _id: 13,
-                text: 'Hello coder9',
-                state: 1,
-                createdAt: new Date(),
-                user: {
-                    _id: 4,
-                    name: 'React Native',
-                    avatar: 'https://facebook.github.io/react/img/logo_og.png',
-                },
-            },
-            {
-                _id: 8,
-                text: 'Hello coder4',
-                state: 1,
-                createdAt: new Date(),
-                user: {
-                    _id: 4,
-                    name: 'React Native',
-                    avatar: 'https://facebook.github.io/react/img/logo_og.png',
-                },
-            },
-            {
-                _id: 9,
-                text: 'Hello coder5',
-                state: 1,
-                createdAt: new Date(),
-                user: {
-                    _id: 4,
-                    name: 'React Native',
-                    avatar: 'https://facebook.github.io/react/img/logo_og.png',
-                },
-            },
-            {
-                _id: 10,
-                text: 'Hello coder6',
-                state: 1,
-                createdAt: new Date(),
-                user: {
-                    _id: 4,
-                    name: 'React Native',
-                    avatar: 'https://facebook.github.io/react/img/logo_og.png',
-                },
-            },
-            {
-                _id: 11,
-                text: 'Hello coder7',
-                state: 1,
-                createdAt: new Date(),
-                user: {
-                    _id: 4,
-                    name: 'React Native',
-                    avatar: 'https://facebook.github.io/react/img/logo_og.png',
-                },
-            },
-        ];
-        this.setState({ messages: this.state.messages.concat(rest),
-            loadEarlier: false, isLoadingEarlier: false });
-    }
-
     render() {
-        <Chat messages={this.state.messages}
-              loadEarlier={this.state.loadEarlier}
-              onLoadEarlier={this.onLoadEarlier.bind(this)}
-              isLoadingEarlier={this.state.isLoadingEarlier}
-              onPressAvatar={(user) => {console.log(user)} }
-              onMessageSend={(message) => { console.log(message)} }
-              userID={1}
-              userName='ahmed'
-            //rightColor='#AB47BC'
-        />
+       // _fillDatabaseWithDummyChannels();
+        //_fillDummyMessages(this.props.channelSurrogateKey);
+        const userId = userService.mapSurrogateId(this.props.channelSurrogateKey);
+        const localName = userService.getChannelLocalName(this.props.channelSurrogateKey);
+        return (
+            <Chat messages={messageListAdapter(this.props.channelSurrogateKey)}
+                  onPressAvatar={(user) => {
+                      console.log(user)
+                  } }
+                  onMessageSend={(message) => {
+                      console.log(message)
+                  } }
+                  userID={userId}
+                  userName='Ahmed'
+                //rightColor='#AB47BC'
+            />
+        );
     }
 }
 
